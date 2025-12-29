@@ -1,0 +1,56 @@
+#Monte Carlo Simulations are used to model and analyze complex systems or processes by generating random samples of input variables and observing their impact on the systems output
+#Essential Libraries
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import datetime as dt
+import yfinance as yf
+
+#Import data
+def get_data(stocks, start, end):
+    stockData = yf.download(stocks, start=start, end=end)['Close']
+    returns = stockData.pct_change()
+    meanReturns = returns.mean()
+    covMatrix = returns.cov()
+    return meanReturns, covMatrix
+
+# NASDAQ stocks
+stockList = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA']
+endDate = dt.datetime.now()
+startDate = endDate - dt.timedelta(days=365)
+
+meanReturns, covMatrix = get_data(stockList, startDate, endDate)
+
+weights = np.random.random(len(meanReturns))
+weights /= np.sum(weights)
+
+# Monte Carlo
+# Number of Simulations
+mc_sims = 100
+T = 100  # Time in Days
+
+portfolio_sims = np.full(shape=(T, mc_sims), fill_value=0.0)
+
+PortfolioValue = 100000
+
+for m in range(0, mc_sims):
+    Z = np.random.normal(size=(T, len(weights)))
+    L = np.linalg.cholesky(covMatrix)
+    dailyReturns = meanReturns.values + np.dot(Z, L.T)
+    portfolio_sims[:, m] = np.cumprod(np.dot(dailyReturns, weights) + 1) * PortfolioValue
+
+plt.plot(portfolio_sims)
+plt.ylabel('Portfolio Value ($)')
+plt.xlabel('Days')
+plt.title('Monte Carlo Simulation of Portfolio Value')
+plt.show()
+
+# Line 9 - 22 Data Collection
+## Downloads data and calculates the daily percentage return of each stock and then computes the mean return as well as the covariance matrix
+# Line 24 - 25 Portfolio Setup
+## Weights distributed at random
+# Line 27 - 34 Monte Carlo
+## Runs 100 distinct simulations and projects the value over the next 100 days from the intial investment
+# Line 36 - 40 Loops
+## Z generates 100 distinct days to account for volatility, L breaks down the covariance matrix to preserve correlation
+## The daily returns are calculated and then multiplied by the weights to track the portfolio
