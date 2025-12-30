@@ -1,0 +1,48 @@
+# Implementing the Black Scholes model for option pricing to find the volatility, and call/put price.
+
+#Import libraries
+import yfinance as yf
+import numpy as np
+from scipy.stats import norm
+
+#Pick any stock (TSX), I chose RBC
+ticker = "RY.TO"
+stock = yf.Ticker(ticker)
+
+# Variables
+r = 0.025  #any realistic value such as 2%-4%
+
+S = stock.history(period="1d")["Close"].iloc[-1]  #Closing price
+
+K = S  #Estimated strike price o.w. pick an arbitrary value
+
+T = 30 / 365  #Pick your time frame
+
+hist = stock.history(period="1y")["Close"]
+log_returns = np.log(hist / hist.shift(1)).dropna() #Shifts all the closing prices down by one
+vol = log_returns.std() * np.sqrt(251)  #Take daily returns and scale by the amount of trading days to get annual
+
+
+def blackscholes(S, K, T, r, vol, option_type="Call"):
+    d1 = (np.log(S / K) + (r + 0.5 * vol ** 2) * T) / (vol * np.sqrt(T))
+    d2 = d1 - vol * np.sqrt(T)
+    if option_type == "Call":
+        return S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    elif option_type == "Put":
+        return K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+    else:
+        raise ValueError("NOT A VALID OPTION")
+
+call_price = blackscholes(S, K, T, r, vol, "Call")
+put_price = blackscholes(S, K, T, r, vol, "Put")
+
+print(f"Ticker: {ticker}")
+print(f"Stock Price: ${S:.2f}")
+print(f"Volatility: {vol:.2%}")
+print(f"Call Price: ${call_price:.2f}")
+print(f"Put Price: ${put_price:.2f}")
+
+#For Calls:
+## Buy if model price > market price
+#For Puts:
+## Buy if model price < market price
