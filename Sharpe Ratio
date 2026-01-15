@@ -1,4 +1,4 @@
-#Sharpe Ratio (SR = Return/Risk) or (Avg Daily Return / Volatility) * (sqrt(252))
+#Sharpe Ratio (SR = Return/Risk) or (Avg Daily Return / Volatility) * (sqrt(252)) Slightly altered in the example below
 import yfinance as yf
 import numpy as np
 import matplotlib.pyplot as plt
